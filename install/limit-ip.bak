@@ -1,0 +1,317 @@
+#!/bin/bash
+# limit-locker.sh
+# Versi: lock sementara 5 menit, lalu restore
+# Pastikan dieksekusi sebagai root
+
+LOCK_DIR="/etc/kyt/limit/locks"
+DISABLED_DIR="/etc/xray/disabled"
+CHATMAP_DIR="/etc/kyt/limit/chatid"   # (optional) tempat mapping user->chatid, tiap file berisi chat id
+
+mkdir -p "$LOCK_DIR" "$DISABLED_DIR" "$CHATMAP_DIR"
+
+# ========== Updated send_log (formatted like request) ==========
+function send_log(){
+  # Try env file first, then fallback to /etc/bot/.bot.db
+  local ENV_FILE="/etc/notif/limit.env"
+  local KEY CHATID ADMIN
+  if [[ -f "$ENV_FILE" ]]; then
+    # shellcheck disable=SC1090
+    . "$ENV_FILE"
+    KEY="${BOT_TOKEN:-}"
+    CHATID="${CHAT_ID:-}"
+    ADMIN="${ADMINX:-}"
+  fi
+
+  # fallback: parse /etc/bot/.bot.db (format used in your script)
+  if [[ -z "$KEY" || -z "$CHATID" || -z "$ADMIN" ]]; then
+    if [[ -f "/etc/bot/.bot.db" ]]; then
+      KEY="$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 2 | head -n1)"
+      CHATID="$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 3 | head -n1)"
+      # ADMIN fallback: try environment var ADMINX or leave empty
+      ADMIN="${ADMIN:-${ADMINX:-}}"
+    fi
+  fi
+
+  local TIME="10"
+  local URL="https://api.telegram.org/bot${KEY}/sendMessage"
+
+  if [[ -z "$KEY" || -z "$CHATID" ]]; then
+    echo "[send_log] BOT_TOKEN/CHAT_ID tidak ditemukan di $ENV_FILE atau /etc/bot/.bot.db" >&2
+    return 1
+  fi
+
+  # ========== DATA ==========
+  local ISP CITY DOMAIN
+  [ -f /etc/xray/isp ]    && ISP="$(cat /etc/xray/isp 2>/dev/null)"
+  [ -f /etc/xray/city ]   && CITY="$(cat /etc/xray/city 2>/dev/null)"
+  [ -f /etc/xray/domain ] && DOMAIN="$(cat /etc/xray/domain 2>/dev/null)"
+
+  local service="${service:-UNKNOWN}"
+  local user_e="${user:-UNKNOWN}"
+  local data_e="${data:-UNKNOWN}"
+  local action_e="${action:-UNKNOWN}"
+
+  # Escape HTML
+  html_escape() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
+
+  local ISP_E CITY_E DOMAIN_E USER_E TOTAL_E SERVICE_E ACTION_E
+  ISP_E="$(printf '%s' "$ISP"     | html_escape)"
+  CITY_E="$(printf '%s' "$CITY"    | html_escape)"
+  DOMAIN_E="$(printf '%s' "$DOMAIN" | html_escape)"
+  USER_E="$(printf '%s' "$user_e"  | html_escape)"
+  TOTAL_E="$(printf '%s' "$data_e"  | html_escape)"
+  SERVICE_E="$(printf '%s' "$service" | html_escape)"
+  ACTION_E="$(printf '%s' "$action_e" | html_escape)"
+  ADMIN_E="$(printf '%s' "$ADMIN" | html_escape)"
+
+  # ========== MESSAGE ==========
+  local TEXT
+  read -r -d '' TEXT <<EOF
+<b>┌──────────────────────────┐</b>
+<b>           🚨 NOTIF LIMIT QUOTA USER HABIS 🚨      </b>
+<b>└──────────────────────────┘</b>
+
+<pre>
+┌─────────────────────────────────────┐
+│ 🔧 Service  : ${SERVICE_E}
+│ 🌐 Domain   : ${DOMAIN_E}
+│ ✨ City     : ${CITY_E}
+│ 🏷 ISP      : ${ISP_E}
+│ 👤 Username : ${USER_E}
+│ 📊 Usage    : ${TOTAL_E}
+│ ⚙️ Action   : ${ACTION_E}
+├─────────────────────────────────────┤
+│ ⏰ $(date "+%d-%m-%Y %H:%M:%S")
+└─────────────────────────────────────┘
+</pre>
+
+<i>🤖 Notifikasi Bot Otomatis ${ADMIN_E}</i>
+EOF
+
+  # ========== SEND ==========
+  curl -s --max-time "$TIME" \
+    --data-urlencode "text=${TEXT}" \
+    -d "chat_id=${CHATID}" \
+    -d "parse_mode=html" \
+    -d "disable_web_page_preview=1" \
+    "$URL" >/dev/null
+}
+
+# Send notification to user if mapping exists
+function send_user_notification(){
+  local uname="$1"
+  local msg="$2"
+  local chatfile="$CHATMAP_DIR/$uname"
+  if [[ -f "$chatfile" ]]; then
+    local CHATID_USER
+    CHATID_USER=$(cat "$chatfile" | tr -d '[:space:]')
+    KEY=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 2)
+    TIME="10"
+    URL="https://api.telegram.org/bot$KEY/sendMessage"
+    curl -s --max-time $TIME -d "chat_id=$CHATID_USER&disable_web_page_preview=1&text=$msg&parse_mode=html" $URL >/dev/null
+  fi
+}
+
+# Extract block from config between start marker and next '^},{' line (inclusive)
+# args: configfile, start_marker, dest_file
+function extract_block(){
+  local cfg="$1"
+  local marker="$2"
+  local dest="$3"
+
+  # find start line number
+  local start
+  start=$(grep -n -m1 -F "$marker" "$cfg" | cut -d: -f1)
+  if [[ -z "$start" ]]; then
+    return 1
+  fi
+
+  # find end line (first line matching '^},{' after start)
+  local total
+  total=$(wc -l < "$cfg")
+  local end
+  end=$(awk "NR>$start && /^\\},\\{/ {print NR; exit}" "$cfg")
+  if [[ -z "$end" ]]; then
+    # if no '^},{', try to find next '### ' or EOF -> fallback to EOF
+    end=$total
+  else
+    end=$((end-1))
+  fi
+
+  sed -n "${start},${end}p" "$cfg" > "$dest"
+  return 0
+}
+
+# Remove block from config between start marker and end pattern
+function remove_block(){
+  local cfg="$1"
+  local marker="$2"
+  local tmp
+  tmp=$(mktemp)
+  # delete from marker line up to the next line that starts with '^},{' (or until EOF)
+  awk -v m="$marker" '
+    BEGIN{skip=0}
+    $0~m{skip=1; next}
+    skip==1 && $0~/^\},\{/ {skip=0; next}
+    skip==0{print}
+  ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+}
+
+# Append block back to config (at end)
+function append_block(){
+  local cfg="$1"
+  local blockfile="$2"
+  if [[ -f "$blockfile" ]]; then
+    # Append with newline then content
+    printf "\n" >> "$cfg"
+    cat "$blockfile" >> "$cfg"
+    # optionally remove the block file after restore
+    rm -f "$blockfile"
+  fi
+}
+
+# Generic lock handler
+# args: service (vmess/vless/trojan), user, marker_prefix, dbfile_path (db deletion pattern), iplimit_file_path
+function handle_lock_temporary(){
+  local service="$1"
+  local user="$2"
+  local marker="$3"    # e.g. "### $user $exp" or "#& $user $exp" or "#! $user $exp"
+  local cfg="/etc/xray/config.json"
+  local dbpath="$4"
+  local ipfile="$5"
+
+  # prevent double lock
+  local lockfile="$LOCK_DIR/${service}_${user}.lock"
+  if [[ -f "$lockfile" ]]; then
+    echo "User $user on $service already locked. Skipping"
+    return
+  fi
+  touch "$lockfile"
+
+  local timestamp
+  timestamp=$(date +%s)
+  local blockfile="$DISABLED_DIR/${service}_${user}_${timestamp}.blk"
+
+  # extract block
+  if ! extract_block "$cfg" "$marker" "$blockfile"; then
+    # fallback: if can't extract, still create a minimal block note
+    echo "// blocked $user at $timestamp" > "$blockfile"
+  fi
+
+  # remove block from config
+  remove_block "$cfg" "$marker"
+
+  # optionally remove from db file entries (we won't permanently delete, we'll move them)
+  if [[ -n "$dbpath" && -f "$dbpath" ]]; then
+    # move matching lines to backup file
+    grep -n -F " $user" "$dbpath" > /dev/null 2>&1 && \
+      mv "$dbpath" "${dbpath}.bak.${timestamp}" 2>/dev/null || true
+  fi
+
+  # restart xray
+  systemctl restart xray >> /dev/null 2>&1
+
+  # send admin log (action=locked)
+  action="LOCKED for 5 minutes"
+  send_log
+
+  # notify user (if chatid mapping exists)
+  send_user_notification "$user" "⚠️ Akun *$user* dikunci sementara selama *5 menit* karena terdeteksi multi-login (limit IP terlampaui)."
+
+  # keep the ip file (or remove to prevent repeated triggers)
+  # rm -f "$ipfile"   # we keep it, in case you want to preserve limit setting
+
+  # background wait 5 minutes then restore
+  (
+    sleep 300
+    # restore block back
+    append_block "$cfg" "$blockfile"
+
+    # restore db if backup exists
+    if [[ -f "${dbpath}.bak.${timestamp}" ]]; then
+      mv "${dbpath}.bak.${timestamp}" "$dbpath" 2>/dev/null || true
+    fi
+
+    systemctl.restart xray >> /dev/null 2>&1 || systemctl restart xray >/dev/null 2>&1
+
+    # notify admin re-open
+    action="RE-ENABLED after 5 minutes"
+    send_log
+
+    # notify user
+    send_user_notification "$user" "✅ Selamat — Akun *$user* telah dibuka kembali dan dapat digunakan seperti semula."
+
+    # cleanup lockfile
+    rm -f "$lockfile"
+    # cleanup blockfile already removed during append (append_block removes it)
+  ) &
+
+}
+
+# VMESS handler
+function vmip(){
+  echo -n > /var/log/xray/access.log
+  sleep 2   # small delay to collect logs quickly rather than long sleep
+  data=( `ls /etc/kyt/limit/vmess/ip 2>/dev/null` );
+  for user in "${data[@]}"
+  do
+    iplimit=$(cat /etc/kyt/limit/vmess/ip/$user 2>/dev/null)
+    ehh=$(cat /var/log/xray/access.log | grep "$user" | awk '{print $3}' | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq)
+    cekcek=$(echo -e "$ehh" | sed '/^$/d' | wc -l)
+    if [[ $cekcek -gt $iplimit ]]; then
+      # find exp for marker
+      exp=$(grep -w "^### $user" "/etc/xray/config.json" | awk '{print $3}' | sort -u)
+      marker="### $user $exp"
+      handle_lock_temporary "vmess" "$user" "$marker" "/etc/vmess/.vmess.db" "/etc/kyt/limit/vmess/ip/$user"
+    fi
+    sleep 0.1
+  done
+}
+
+# VLESS handler
+function vlip(){
+  echo -n > /var/log/xray/access.log
+  sleep 2
+  data=( `ls /etc/kyt/limit/vless/ip 2>/dev/null` );
+  for user in "${data[@]}"
+  do
+    iplimit=$(cat /etc/kyt/limit/vless/ip/$user 2>/dev/null)
+    ehh=$(cat /var/log/xray/access.log | grep "$user" | awk '{print $3}' | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq)
+    cekcek=$(echo -e "$ehh" | sed '/^$/d' | wc -l)
+    if [[ $cekcek -gt $iplimit ]]; then
+      exp=$(grep -w "^#& $user" "/etc/xray/config.json" | awk '{print $3}' | sort -u)
+      marker="#& $user $exp"
+      handle_lock_temporary "vless" "$user" "$marker" "/etc/vless/.vless.db" "/etc/kyt/limit/vless/ip/$user"
+    fi
+    sleep 0.1
+  done
+}
+
+# TROJAN handler
+function trip(){
+  echo -n > /var/log/xray/access.log
+  sleep 2
+  data=( `ls /etc/kyt/limit/trojan/ip 2>/dev/null` );
+  for user in "${data[@]}"
+  do
+    iplimit=$(cat /etc/kyt/limit/trojan/ip/$user 2>/dev/null)
+    ehh=$(cat /var/log/xray/access.log | grep "$user" | awk '{print $3}' | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq)
+    cekcek=$(echo -e "$ehh" | sed '/^$/d' | wc -l)
+    if [[ $cekcek -gt $iplimit ]]; then
+      exp=$(grep -w "^#! $user" "/etc/xray/config.json" | awk '{print $3}' | sort -u)
+      marker="#! $user $exp"
+      handle_lock_temporary "trojan" "$user" "$marker" "/etc/trojan/.trojan.db" "/etc/kyt/limit/trojan/ip/$user"
+    fi
+    sleep 0.1
+  done
+}
+
+if [[ ${1} == "vmip" ]]; then
+  vmip
+elif [[ ${1} == "vlip" ]]; then
+  vlip
+elif [[ ${1} == "trip" ]]; then
+  trip
+else
+  echo "Usage: $0 {vmip|vlip|trip}"
+fi

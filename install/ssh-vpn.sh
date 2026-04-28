@@ -360,7 +360,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 EOF
 
 # autocpu helper
-wget -q -O /usr/bin/autocpu "${REPO}install/autocpu.sh" && chmod +x /usr/bin/autocpu || true
+wget -q -O /usr/bin/autocpu "${REPO2}install/autocpu.sh" && chmod +x /usr/bin/autocpu || true
 
 cat > /etc/cron.d/xp_sc <<'EOF'
 SHELL=/bin/sh

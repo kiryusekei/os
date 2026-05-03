@@ -25,7 +25,7 @@ checking_sc() {
         echo -e " [INFO] Fetching server version..."
 
         ### 🌍 Lokasi repository update
-        REPO="http://ansendant.web.id/os/"  # Ganti dengan URL repository Anda
+        REPO="https://raw.githubusercontent.com/kiryusekei/os/main/"  # Ganti dengan URL repository Anda
         serverV=$(curl -sS ${REPO}versi)
 
         ### 🔍 Cek versi lokal

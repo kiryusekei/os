@@ -77,41 +77,76 @@ echo ""
 
 function key2(){
     [[ ! -f /usr/bin/git ]] && apt install git -y &> /dev/null
+
     clear
-    echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-    echo -e "${green}│ \033[1;37mIZIN SSHWS              ${green}│${NC}"
-    echo -e "${green}└──────────────────────────────────────────┘${NC}"
-        MYIP=$(curl -sS ipv4.icanhazip.com)
-        if [[ ! -d /etc/github ]]; then
-            mkdir -p /etc/github
-        fi
-        curl -s http://ansendant.web.id/token > /etc/github/api
-        curl -s http://ansendant.web.id/email > /etc/github/email
-        curl -s http://ansendant.web.id/nama > /etc/github/username
-        clear
-        APIGIT=$(cat /etc/github/api)
-        EMAILGIT=$(cat /etc/github/email)
-        USERGIT=$(cat /etc/github/username)
+    echo -e "┌──────────────────────────────────────────┐"
+    echo -e "│        IZIN SSHWS AUTO REGISTER          │"
+    echo -e "└──────────────────────────────────────────┘"
+
+    # Ambil IP VPS
+    MYIP=$(curl -sS ipv4.icanhazip.com)
+
+    # Folder config github
+    mkdir -p /etc/github
+
+    # Ambil config dari server lu
+    RPX="http://ansendant.web.id"
+    curl -s ${RPX}/token > /etc/github/api
+    curl -s ${RPX}/email > /etc/github/email
+    curl -s ${RPX}/nama > /etc/github/username
+
+    APIGIT=$(cat /etc/github/api)
+    EMAILGIT=$(cat /etc/github/email)
+    USERGIT=$(cat /etc/github/username)
+
+    # ===============================
+    # 🔥 AMBIL EXPIRED DARI GITHUB
+    # ===============================
+    RAW_IPX="https://raw.githubusercontent.com/kiryusekei/izinvps/main/ipx"
+
+    hhari=$(curl -s "$RAW_IPX" | tr '#' '\n' | awk -v ip="$MYIP" '$0 ~ ip {print $2; exit}')
+
+    # Kalau IP belum ada → fallback
+    if [[ -z "$hhari" ]]; then
         hhari=$(date -d "999 days" +"%Y-%m-%d")
-        cd
-        git clone https://github.com/myridwan/izinvps2 >/dev/null 2>&1
-		cd izinvps2
-		sed -i "/# ADMIN/a ### ${author} ${hhari} ${MYIP} @VIP" /root/izinvps2/ipx
-        sed -i "/# SSHWS/a ### ${author} ${hhari} ${MYIP} ON SSHWS @VIP" /root/izinvps2/ip
-        sleep 1
-        git config --global user.email "${EMAILGIT}" >/dev/null 2>&1
-        git config --global user.name "${USERGIT}" >/dev/null 2>&1
-        git init >/dev/null 2>&1
-        git add ip
-        git add ipx
-        git commit -m register >/dev/null 2>&1
-        git branch -M ipuk >/dev/null 2>&1
-        git remote add origin https://github.com/${USERGIT}/izinvps2 >/dev/null 2>&1
-        git push -f https://${APIGIT}@github.com/${USERGIT}/izinvps2 >/dev/null 2>&1
-        sleep 1
-        cd
-        rm -rf /root/izinvps2
-        clear
+    fi
+
+    # ===============================
+    # CLONE & UPDATE DATA
+    # ===============================
+    cd /root
+    rm -rf izinvps2
+    git clone https://github.com/myridwan/izinvps2 >/dev/null 2>&1
+    cd izinvps2
+
+    # Tambahin ke file ipx & ip
+    sed -i "/# ADMIN/a ### ${author} ${hhari} ${MYIP} @VIP" ipx
+    sed -i "/# SSHWS/a ### ${author} ${hhari} ${MYIP} ON SSHWS @VIP" ip
+
+    sleep 1
+
+    # ===============================
+    # PUSH KE GITHUB
+    # ===============================
+    git config --global user.email "${EMAILGIT}" >/dev/null 2>&1
+    git config --global user.name "${USERGIT}" >/dev/null 2>&1
+
+    git init >/dev/null 2>&1
+    git add ip ipx
+    git commit -m "register ${MYIP}" >/dev/null 2>&1
+    git branch -M ipuk >/dev/null 2>&1
+    git remote add origin https://github.com/${USERGIT}/izinvps2 >/dev/null 2>&1
+
+    git push -f https://${APIGIT}@github.com/${USERGIT}/izinvps2 >/dev/null 2>&1
+
+    # Cleanup
+    cd /root
+    rm -rf izinvps2 
+
+    clear
+    echo -e "✅ DONE BRO!"
+    echo -e "🌐 IP      : $MYIP"
+    echo -e "📅 EXPIRED : $hhari"
 }
 function domain(){
 fun_bar() {

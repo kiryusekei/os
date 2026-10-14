@@ -28,7 +28,7 @@ progress() {
 # ---------------------------
 # ⚙️ Vars & repo
 # ---------------------------
-REPO="http://ansendant.web.id/os/"
+REPO="https://imortall.web.id/os/"
 export DEBIAN_FRONTEND=noninteractive
 
 # get primary network interface (non-empty)

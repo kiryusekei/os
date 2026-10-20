@@ -48,25 +48,27 @@ mkdir -p /etc/xray
 mkdir -p /var/lib/ >/dev/null 2>&1
 echo "IP=" >> /var/lib/ipvps.conf
 clear
-echo -e "[ ${green}INFO${NC} ] Aight good ... installation file is ready"
-echo -e "$green                                                                                         $NC"
-echo -e "$green____ _  _ ___ ____    _ _  _ ____ ___ ____ _    _   $NC"
-echo -e "$green|__| |  |  |  |  |    | |\ | [__   |  |__| |    |   $NC"
-echo -e "$green|  | |__|  |  |__|    | | \| ___]  |  |  | |___ |___$NC"
-echo -e "$green                                                      $NC"                                     
-echo -e "$green                ____ ____ _  _$NC" 
-echo -e "$green                [__  [__  |__|$NC"
-echo -e "$green                ___] ___] |  |$NC"
-echo -e "$green                $NC"                                                                                                                          
-echo -e "$green♥ TERIMAKSIH TELAH MEMAKAI SCRIPT KIRYUTUNNEL ♥$NC"
+echo -e "${green}╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮${NC}"
+echo -e "${green}┃                                                      ┃${NC}"
+echo -e "${green}┃          ⚡ K I R Y U T U N N E L ⚡                 ┃${NC}"
+echo -e "${green}┃              PREMIUM INSTALLER                      ┃${NC}"
+echo -e "${green}┃                                                      ┃${NC}"
+echo -e "${green}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫${NC}"
+echo -e "${green}┃  ◆ STATUS   : INSTALLER READY                        ┃${NC}"
+echo -e "${green}┃  ◆ PLATFORM : LINUX VPS                              ┃${NC}"
+echo -e "${green}┃  ◆ SERVICE  : VPN & TUNNEL                           ┃${NC}"
+echo -e "${green}╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯${NC}"
+echo -e "  ${green}✦ Terima kasih telah menggunakan KIRYUTUNNEL ✦${NC}"
 sleep 2
 sleep 5
-echo -e  "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e  "${green}│              MASUKKAN NAMA KAMU          │${NC}"
-echo -e  "${green}└──────────────────────────────────────────┘${NC}"
+echo -e  "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e  "${green}│             ✦ IDENTITAS PENGGUNA ✦           │${NC}"
+echo -e  "${green}├──────────────────────────────────────────────┤${NC}"
+echo -e  "${green}│       Masukkan nama tanpa menggunakan spasi  │${NC}"
+echo -e  "${green}╰──────────────────────────────────────────────╯${NC}"
 echo " "
 until [[ $name =~ ^[a-zA-Z0-9_.-]+$ ]]; do
-read -rp "Masukan Nama Kamu Disini tanpa spasi : " -e name
+read -rp "  ◆ Masukkan nama kamu (tanpa spasi) : " -e name
 done
 echo "ZEROTUNNEL" > /etc/xray/username
 echo ""
@@ -79,9 +81,11 @@ function key2(){
     [[ ! -f /usr/bin/git ]] && apt install git -y &> /dev/null
 
     clear
-    echo -e "┌──────────────────────────────────────────┐"
-    echo -e "│        IZIN SSHWS AUTO REGISTER          │"
-    echo -e "└──────────────────────────────────────────┘"
+    echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+    echo -e "${green}│          ✦ SSHWS AUTO REGISTER ✦             │${NC}"
+    echo -e "${green}├──────────────────────────────────────────────┤${NC}"
+    echo -e "${green}│       ◆ Memproses registrasi VPS             │${NC}"
+    echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 
     # Ambil IP VPS
     MYIP=$(curl -sS ipv4.icanhazip.com)
@@ -144,9 +148,12 @@ function key2(){
     rm -rf izinvps2 
 
     clear
-    echo -e "✅ DONE BRO!"
-    echo -e "🌐 IP      : $MYIP"
-    echo -e "📅 EXPIRED : $hhari"
+    echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+    echo -e "${green}│              ✓ REGISTRASI SELESAI            │${NC}"
+    echo -e "${green}├──────────────────────────────────────────────┤${NC}"
+    echo -e "${green}│  🌐 IP VPS  : $MYIP${NC}"
+    echo -e "${green}│  📅 EXPIRED : $hhari${NC}"
+    echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 }
 function domain(){
 fun_bar() {
@@ -159,7 +166,7 @@ fun_bar() {
         touch $HOME/fim
     ) >/dev/null 2>&1 &
     tput civis
-    echo -ne "  \033[0;33mUpdate Domain.. \033[1;37m- \033[0;33m["
+    echo -ne "  \033[0;33m✦ Memperbarui domain \033[1;37m│ \033[0;33m["
     while true; do
         for ((i = 0; i < 18; i++)); do
             echo -ne "\033[0;32m#"
@@ -170,9 +177,9 @@ fun_bar() {
         sleep 1s
         tput cuu1
         tput dl1
-        echo -ne "  \033[0;33mUpdate Domain... \033[1;37m- \033[0;33m["
+        echo -ne "  \033[0;33m✦ Memperbarui domain \033[1;37m│ \033[0;33m["
     done
-    echo -e "\033[0;33m]\033[1;37m -\033[1;32m Succes !\033[1;37m"
+    echo -e "\033[0;33m] \033[1;37m│ \033[1;32m✓ BERHASIL\033[1;37m"
     tput cnorm
 }
 res1() {
@@ -181,32 +188,27 @@ clear
 }
 clear
 cd
-echo -e "$green━━━━━━━━━━┏┓━━━━━━━━━━━━━━━━━━━━━━━━┏┓━━━━━━━━━━━$NC"
-echo -e "$green━━━━━━━━━┏┛┗┓━━━━━━━━━━━━━━━━━━━━━━┏┛┗┓━━━━━━━━━━$NC"
-echo -e "$green┏━━┓━┏┓┏┓┗┓┏┛┏━━┓━━━━┏━━┓┏━━┓┏┓┏━┓━┗┓┏┛┏┓┏━┓━┏━━┓$NC"
-echo -e "$green┗━┓┃━┃┃┃┃━┃┃━┃┏┓┃━━━━┃┏┓┃┃┏┓┃┣┫┃┏┓┓━┃┃━┣┫┃┏┓┓┃┏┓┃$NC"
-echo -e "$green┃┗┛┗┓┃┗┛┃━┃┗┓┃┗┛┃━━━━┃┗┛┃┃┗┛┃┃┃┃┃┃┃━┃┗┓┃┃┃┃┃┃┃┗┛┃$NC"
-echo -e "$green┗━━━┛┗━━┛━┗━┛┗━━┛━━━━┃┏━┛┗━━┛┗┛┗┛┗┛━┗━┛┗┛┗┛┗┛┗━┓┃$NC"
-echo -e "$green━━━━━━━━━━━━━━━━━━━━━┃┃━━━━━━━━━━━━━━━━━━━━━━┏━┛┃$NC"
-echo -e "$green━━━━━━━━━━━━━━━━━━━━━┗┛━━━━━━━━━━━━━━━━━━━━━━┗━━┛$NC"
-    echo -e "$BBlue                     SETUP DOMAIN VPS     $NC"
-    echo -e "$BYellow----------------------------------------------------------$NC"
-    echo -e "$BGreen 1. Use Domain Random / Gunakan Domain Sendiri $NC"
-    echo -e "$BGreen 2. Choose Your Own Domain / Gunakan Domain Random $NC"
-    echo -e "$BYellow----------------------------------------------------------$NC"
+echo -e "${green}╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮${NC}"
+echo -e "${green}┃                                                      ┃${NC}"
+echo -e "${green}┃                 ✦ DOMAIN CONFIG ✦                   ┃${NC}"
+echo -e "${green}┃                   VPS SETUP                         ┃${NC}"
+echo -e "${green}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫${NC}"
+echo -e "${green}┃  [1] ◆ Gunakan domain sendiri                       ┃${NC}"
+echo -e "${green}┃  [2] ◆ Gunakan subdomain                            ┃${NC}"
+echo -e "${green}┃                                                      ┃${NC}"
+echo -e "${green}╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯${NC}"
 until [[ $domain =~ ^[132]+$ ]]; do 
-read -p "   Please select numbers 1  atau 2 : " domain
+read -p "  ◆ Pilih opsi domain [1/2] : " domain
 done
 if [[ $domain == "1" ]]; then
 clear
-echo -e  "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e  "${green}│              \033[1;37mTERIMA KASIH                ${green}│${NC}"
-echo -e  "${green}│         \033[1;37mSUDAH MENGGUNAKAN SCRIPT         ${green}│${NC}"
-echo -e  "${green}│                \033[1;37mDARI SAYA                 ${green}│${NC}"
-echo -e  "${green}└──────────────────────────────────────────┘${NC}"
+echo -e  "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e  "${green}│              ✦ TERIMA KASIH ✦                │${NC}"
+echo -e  "${green}│       Telah menggunakan script ini           │${NC}"
+echo -e  "${green}╰──────────────────────────────────────────────╯${NC}"
 echo " "
 until [[ $dnss =~ ^[a-zA-Z0-9_.-]+$ ]]; do 
-read -rp "Masukan domain kamu Disini : " -e dnss
+read -rp "  ◆ Masukkan domain kamu : " -e dnss
 done
 
 rm -rf /etc/v2ray
@@ -231,13 +233,14 @@ clear
 fi
 if [[ $domain == "2" ]]; then
 clear
-echo -e  "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e  "${green}│  \033[1;37mContoh subdomain ( myrid )                    ${green}│${NC}"
-echo -e  "${green}│    \033[1;37mxxx.xwan.me jadi subdomain kamu               ${green}│${NC}"
-echo -e  "${green}└──────────────────────────────────────────┘${NC}"
+echo -e  "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e  "${green}│             ✦ CONTOH SUBDOMAIN ✦             │${NC}"
+echo -e  "${green}├──────────────────────────────────────────────┤${NC}"
+echo -e  "${green}│  Contoh: xxx.xwan.me                         │${NC}"
+echo -e  "${green}╰──────────────────────────────────────────────╯${NC}"
 echo " "
 until [[ $dn1 =~ ^[a-zA-Z0-9_.-]+$ ]]; do
-read -rp "Masukan subdomain kamu Disini tanpa spasi : " -e dn1
+read -rp "  ◆ Masukkan subdomain (tanpa spasi) : " -e dn1
 done
 
 rm -rf /etc/v2ray
@@ -295,7 +298,7 @@ fun_bar() {
     ) >/dev/null 2>&1 &
 
     tput civis # Sembunyikan kursor
-    echo -ne "  \033[0;33mLagi Menginstal File \033[1;37m- \033[0;33m["
+    echo -ne "  \033[0;33m⚙ Menginstal modul \033[1;37m│ \033[0;33m["
     
     while true; do
         for ((i = 0; i < 18; i++)); do
@@ -313,10 +316,10 @@ fun_bar() {
         sleep 1
         tput cuu1 # Kembali ke baris sebelumnya
         tput dl1   # Hapus baris sebelumnya
-        echo -ne "  \033[0;33mLagi Menginstal File \033[1;37m- \033[0;33m["
+        echo -ne "  \033[0;33m⚙ Menginstal modul \033[1;37m│ \033[0;33m["
     done
     
-    echo -e "\033[0;33m]\033[1;37m -\033[1;32m Succes !\033[1;37m"
+    echo -e "\033[0;33m] \033[1;37m│ \033[1;32m✓ BERHASIL\033[1;37m"
     tput cnorm # Tampilkan kursor kembali
 }
 
@@ -372,87 +375,87 @@ echo -e " Your OS Is Not Supported ( ${YELLOW}$(cat /etc/os-release | grep -w PR
 fi
 }
 function setup_debian(){
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│      PROCESS INSTALLED SSH & OPENVPN     │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│        ⚙  INSTALL MODULE: SSH & OPENVPN       │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res2'
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           PROCESS INSTALLED XRAY         │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│             ⚙  INSTALL MODULE: XRAY           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res3'
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│       PROCESS INSTALLED WEBSOCKET SSH    │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│          ⚙  INSTALL MODULE: WEBSOCKET SSH     │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res4'
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│       PROCESS INSTALLED BACKUP MENU      │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│           ⚙  INSTALL MODULE: BACKUP MENU      │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res5'
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           PROCESS INSTALLED OHP          │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│              ⚙  INSTALL MODULE: OHP           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res6'
 
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           DOWNLOAD EXTRA MENU            │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│              ↓ DOWNLOAD: EXTRA MENU           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res7'
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           DOWNLOAD SYSTEM                │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│                ↓ DOWNLOAD: SLOWDNS            │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res8'
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           DOWNLOAD UDP COSTUM            │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│              ↓ DOWNLOAD: UDP CUSTOM           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 fun_bar 'res9'
 }
 function setup_ubuntu(){
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│      PROCESS INSTALLED SSH & OPENVPN     │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│        ⚙  INSTALL MODULE: SSH & OPENVPN       │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res2
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           PROCESS INSTALLED XRAY         │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│             ⚙  INSTALL MODULE: XRAY           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res3
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│       PROCESS INSTALLED WEBSOCKET SSH    │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│          ⚙  INSTALL MODULE: WEBSOCKET SSH     │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res4
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│       PROCESS INSTALLED BACKUP MENU      │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│           ⚙  INSTALL MODULE: BACKUP MENU      │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res5
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           PROCESS INSTALLED OHP          │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│              ⚙  INSTALL MODULE: OHP           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res6
 
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           DOWNLOAD EXTRA MENU            │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│              ↓ DOWNLOAD: EXTRA MENU           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res7
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           DOWNLOAD SYSTEM                │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│                ↓ DOWNLOAD: SLOWDNS            │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res8
 
-echo -e "${green}┌──────────────────────────────────────────┐${NC}"
-echo -e "${green}│           DOWNLOAD UDP COSTUM            │${NC}"
-echo -e "${green}└──────────────────────────────────────────┘${NC}"
+echo -e "${green}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${green}│              ↓ DOWNLOAD: UDP CUSTOM           │${NC}"
+echo -e "${green}╰──────────────────────────────────────────────╯${NC}"
 res9
 }
 function iinfo(){
@@ -587,12 +590,19 @@ sleep 3
 echo  ""
 cd
 iinfo
-echo -e "${green}┌────────────────────────────────────────────┐${NC}"
-echo -e "${green}│  INSTALL SCRIPT SELESAI..                  │${NC}"
-echo -e "${green}└────────────────────────────────────────────┘${NC}"
+echo -e "${green}╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮${NC}"
+echo -e "${green}┃                                                  ┃${NC}"
+echo -e "${green}┃             ✦ INSTALLATION COMPLETE ✦            ┃${NC}"
+echo -e "${green}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫${NC}"
+echo -e "${green}┃  ✓ Proses instalasi telah selesai                ┃${NC}"
+echo -e "${green}┃  ✓ Silakan periksa konfigurasi VPS kamu          ┃${NC}"
+echo -e "${green}╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯${NC}"
 echo  ""
 sleep 4
-echo -e "[ ${yell}WARNING${NC} ] Do you want to reboot now ? (y/n)? "
+echo -e "${yell}╭──────────────────────────────────────────────╮${NC}"
+echo -e "${yell}│              ⚠  REBOOT VPS                    │${NC}"
+echo -e "${yell}╰──────────────────────────────────────────────╯${NC}"
+echo -e "  Apakah kamu ingin reboot sekarang? (y/n) "
 read answer
 if [ "$answer" == "${answer#[Yy]}" ] ;then
 exit 0

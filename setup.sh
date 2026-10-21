@@ -326,7 +326,7 @@ fun_bar() {
 
 
 res2() {
-wget ${REPO2}install/ssh-vpn.sh && chmod +x ssh-vpn.sh && ./ssh-vpn.sh
+wget ${REPO}install/ssh-vpn.sh && chmod +x ssh-vpn.sh && ./ssh-vpn.sh
 clear
 } 
 

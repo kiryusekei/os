@@ -356,7 +356,7 @@ clear
 }
 
 res8() {
-wget ${REPO}slowdns/installsl.sh && chmod +x installsl.sh && bash installsl.sh
+wget ${REPO}slowdns/slow.sh && chmod +x slow.sh && bash slow.sh
 clear
 }
 
